@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cybersecurity Threat Analyzer</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0b1120;
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 18px;
+            margin-bottom: 35px;
+        }
+
+        .box {
+            background: #111827;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        input {
+            width: 65%;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #020617;
+            color: white;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 15px 22px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #result {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .result-box {
+            padding: 25px;
+            border-radius: 12px;
+            background: #020617;
+            border: 1px solid #334155;
+        }
+
+        .safe {
+            border-left: 6px solid #22c55e;
+        }
+
+        .medium {
+            border-left: 6px solid #eab308;
+        }
+
+        .danger {
+            border-left: 6px solid #ef4444;
+        }
+
+        .risk {
+            font-size: 27px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #60a5fa;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .finding {
+            padding: 8px 0;
+            color: #cbd5e1;
+        }
+
+        .dna {
+            background: #111827;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .dna-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .label {
+            color: #94a3b8;
+        }
+
+        .value {
+            color: white;
+            font-weight: bold;
+            max-width: 60%;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .advice {
+            background: #172554;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #bfdbfe;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .secondary {
+            background: #334155;
+        }
+
+        .secondary:hover {
+            background: #475569;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>Cybersecurity Threat Analyzer</h1>
+
+    <p class="subtitle">
+        Analyze a URL and generate a forensic security report
+    </p>
+
+
+    <div class="box">
+
+        <input
+            type="text"
+            id="urlInput"
+            placeholder="Enter a URL..."
+        >
+
+        <button onclick="analyzeURL()">
+            🔍 Analyze
+        </button>
+
+
+        <div id="result"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function analyzeURL() {
+
+    let input = document.getElementById("urlInput").value.trim();
+
+    let result = document.getElementById("result");
+
+
+    if (input === "") {
+
+        result.innerHTML = `
+            <div class="result-box danger">
+                <div class="risk">Please enter a URL</div>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    let urlText = input;
+
+
+    if (
+        !urlText.startsWith("http://") &&
+        !urlText.startsWith("https://")
+    ) {
+
+        urlText = "https://" + urlText;
+
+    }
+
+
+    let url;
+
+
+    try {
+
+        url = new URL(urlText);
+
+    } catch {
+
+        result.innerHTML = `
+            <div class="result-box danger">
+                <div class="risk">Invalid URL</div>
+                <div class="finding">
+                    Please enter a valid website address.
+                </div>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    let score = 0;
+
+    let warnings = [];
+
+
+    /* HTTPS CHECK */
+
+    if (url.protocol === "http:") {
+
+        score += 2;
+
+        warnings.push(
+            "⚠️ The URL uses HTTP instead of HTTPS."
+        );
+
+    } else {
+
+        warnings.push(
+            "✅ The URL uses HTTPS."
+        );
+
+    }
+
+
+    /* IP ADDRESS CHECK */
+
+    let ipPattern =
+        /^(?:\d{1,3}\.){3}\d{1,3}$/;
+
+
+    if (ipPattern.test(url.hostname)) {
+
+        score += 2;
+
+        warnings.push(
+            "⚠️ The hostname appears to be an IP address."
+        );
+
+    } else {
+
+        warnings.push(
+            "✅ The hostname uses a domain name."
+        );
+
+    }
+
+
+    /* URL LENGTH */
+
+    if (urlText.length > 100) {
+
+        score += 1;
+
+        warnings.push(
+            "⚠️ The URL is unusually long."
+        );
+
+    } else {
+
+        warnings.push(
+            "✅ URL length is within the basic threshold."
+        );
+
+    }
+
+
+    /* SUSPICIOUS WORDS */
+
+    let suspiciousWords = [
+        "login",
+        "verify",
+        "password",
+        "account",
+        "secure",
+        "update",
+        "bank",
+        "signin"
+    ];
+
+
+    let foundWords = [];
+
+
+    suspiciousWords.forEach(function(word) {
+
+        if (urlText.toLowerCase().includes(word)) {
+
+            foundWords.push(word);
+
+        }
+
+    });
+
+
+    if (foundWords.length > 0) {
+
+        score += foundWords.length;
+
+        warnings.push(
+            "⚠️ Suspicious keywords found: " +
+            foundWords.join(", ")
+        );
+
+    } else {
+
+        warnings.push(
+            "✅ No common suspicious keywords detected."
+        );
+
+    }
+
+
+    /* URL FORENSICS */
+
+
+    let subdomains = 0;
+
+
+    if (url.hostname.split(".").length > 2) {
+
+        subdomains =
+            url.hostname.split(".").length - 2;
+
+    }
+
+
+    if (subdomains >= 3) {
+
+        score += 1;
+
+        warnings.push(
+            "⚠️ The hostname contains multiple subdomains."
+        );
+
+    }
+
+
+    /* @ SYMBOL */
+
+    if (urlText.includes("@")) {
+
+        score += 2;
+
+        warnings.push(
+            "⚠️ The URL contains an @ symbol."
+        );
+
+    }
+
+
+    /* ENCODED CHARACTERS */
+
+    let encodedMatches =
+        urlText.match(/%[0-9A-Fa-f]{2}/g);
+
+
+    let encodedCount =
+        encodedMatches ? encodedMatches.length : 0;
+
+
+    if (encodedCount >= 3) {
+
+        score += 1;
+
+        warnings.push(
+            "⚠️ Multiple encoded characters detected."
+        );
+
+    }
+
+
+    /* PUNYCODE */
+
+    if (url.hostname.includes("xn--")) {
+
+        score += 2;
+
+        warnings.push(
+            "⚠️ Punycode detected in the hostname."
+        );
+
+    }
+
+
+    /* QUERY PARAMETERS */
+
+    let queryParameters =
+        [...url.searchParams.keys()];
+
+
+    /* RISK LEVEL */
+
+    let riskLevel;
+
+    let boxClass;
+
+
+    if (score <= 1) {
+
+        riskLevel = "🟢 LOW RISK";
+        boxClass = "safe";
+
+    }
+
+    else if (score <= 4) {
+
+        riskLevel = "🟡 MEDIUM RISK";
+        boxClass = "medium";
+
+    }
+
+    else {
+
+        riskLevel = "🔴 HIGH RISK";
+        boxClass = "danger";
+
+    }
+
+
+    /* SAFETY ADVICE */
+
+    let advice;
+
+
+    if (score <= 1) {
+
+        advice =
+            "The URL shows few warning indicators. Still verify the website before entering sensitive information.";
+
+    }
+
+    else if (score <= 4) {
+
+        advice =
+            "Several indicators deserve attention. Avoid entering passwords or financial information until the site's identity is verified.";
+
+    }
+
+    else {
+
+        advice =
+            "Multiple warning indicators were detected. Treat the URL cautiously and verify the destination independently.";
+
+    }
+
+
+    /* CREATE REPORT */
+
+    let report = `
+
+        <div class="result-box ${boxClass}">
+
+            <div class="risk">
+                ${riskLevel}
+            </div>
+
+            <div class="score">
+                Risk Score: ${score}
+            </div>
+
+
+            <div class="section-title">
+                🔬 THREAT DNA
+            </div>
+
+
+            <div class="dna">
+
+                <div class="dna-row">
+                    <span class="label">Protocol</span>
+                    <span class="value">${url.protocol.replace(":", "").toUpperCase()}</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Domain</span>
+                    <span class="value">${url.hostname}</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Subdomains</span>
+                    <span class="value">${subdomains}</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">URL Length</span>
+                    <span class="value">${urlText.length} characters</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Path Length</span>
+                    <span class="value">${url.pathname.length} characters</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Query Parameters</span>
+                    <span class="value">${queryParameters.length}</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Encoded Characters</span>
+                    <span class="value">${encodedCount}</span>
+                </div>
+
+                <div class="dna-row">
+                    <span class="label">Punycode</span>
+                    <span class="value">${url.hostname.includes("xn--") ? "Detected" : "Not detected"}</span>
+                </div>
+
+            </div>
+
+
+            <div class="section-title">
+                🧪 FORENSIC FINDINGS
+            </div>
+
+
+    `;
+
+
+    warnings.forEach(function(warning) {
+
+        report += `
+            <div class="finding">
+                ${warning}
+            </div>
+        `;
+
+    });
+
+
+    report += `
+
+            <div class="section-title">
+                💡 SECURITY ADVICE
+            </div>
+
+            <div class="advice">
+                ${advice}
+            </div>
+
+
+            <div class="action-buttons">
+
+                <button onclick="copyReport()">
+                    📋 Copy Report
+                </button>
+
+                <button class="secondary" onclick="saveReport()">
+                    💾 Save Report
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    result.innerHTML = report;
+
+
+    window.currentReport =
+        result.innerText;
+
+}
+
+
+/* COPY REPORT */
+
+function copyReport() {
+
+    navigator.clipboard.writeText(
+        window.currentReport
+    );
+
+    alert("Security report copied!");
+
+}
+
+
+/* SAVE REPORT */
+
+function saveReport() {
+
+    let blob = new Blob(
+        [window.currentReport],
+        { type: "text/plain" }
+    );
+
+
+    let link =
+        document.createElement("a");
+
+
+    link.href =
+        URL.createObjectURL(blob);
+
+
+    link.download =
+        "Cybersecurity_Threat_Report.txt";
+
+
+    link.click();
+
+}
+
+</script>
+
+
+<div style="
+    margin: 50px auto;
+    max-width: 900px;
+    background: #111827;
+    padding: 35px;
+    border-radius: 18px;
+    color: white;
+    text-align: center;
+">
+
+    <h2 style="color: #60a5fa;">
+        🎯 Phishing Attack Simulator
+    </h2>
+
+    <p>
+        Test your ability to identify suspicious messages.
+    </p>
+
+    <div id="quizArea">
+
+        <h3 id="questionNumber">
+            Scenario 1 of 5
+        </h3>
+
+        <div style="
+            background: #020617;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            text-align: left;
+            border: 1px solid #334155;
+        ">
+
+            <p>
+                <strong>From:</strong>
+                security-alert@example-mail.com
+            </p>
+
+            <p>
+                <strong>Subject:</strong>
+                Your account requires immediate verification
+            </p>
+
+            <hr>
+
+            <p id="messageText">
+                We detected unusual activity on your account.
+                Your account will be suspended within 24 hours
+                unless you verify your information immediately.
+                Click the link below to confirm your identity.
+            </p>
+
+        </div>
+
+        <p>
+            <strong>Is this message phishing?</strong>
+        </p>
+
+        <button onclick="answerQuiz(true)">
+            🚨 PHISHING
+        </button>
+
+        <button onclick="answerQuiz(false)">
+            ✅ LEGITIMATE
+        </button>
+
+        <h3 id="scoreDisplay">
+            Score: 0 / 0
+        </h3>
+
+        <div id="quizResult"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let currentQuestion = 0;
+
+let score = 0;
+
+
+const questions = [
+
+    {
+        sender: "security-alert@example-mail.com",
+        subject: "Your account requires immediate verification",
+        message:
+        "We detected unusual activity on your account. Your account will be suspended within 24 hours unless you verify your information immediately.",
+        phishing: true
+    },
+
+    {
+        sender: "library@citylibrary.org",
+        subject: "Your monthly library reminder",
+        message:
+        "Your borrowed books are due next Monday. Please return them to the library before the due date.",
+        phishing: false
+    },
+
+    {
+        sender: "prize-winner@randommail.com",
+        subject: "Congratulations! You won ₹50,000!",
+        message:
+        "You have been selected as our lucky winner. Send your account details immediately to claim your prize.",
+        phishing: true
+    },
+
+    {
+        sender: "school@university.edu",
+        subject: "Class schedule update",
+        message:
+        "Your timetable has been updated. Please check the student portal using the usual website you normally visit.",
+        phishing: false
+    },
+
+    {
+        sender: "urgent-security@unknown-mail.com",
+        subject: "URGENT: Password expires today!",
+        message:
+        "Your password will expire today. Click this unexpected link immediately or your account will be permanently locked.",
+        phishing: true
+    }
+
+];
+
+
+function answerQuiz(userAnswer) {
+
+    const question = questions[currentQuestion];
+
+    const result = document.getElementById("quizResult");
+
+
+    if (userAnswer === question.phishing) {
+
+        score++;
+
+        result.innerHTML = `
+            <div style="
+                margin-top: 20px;
+                padding: 15px;
+                background: #064e3b;
+                border-radius: 10px;
+            ">
+                🎉 Correct! You spotted the threat.
+            </div>
+        `;
+
+    } else {
+
+        result.innerHTML = `
+            <div style="
+                margin-top: 20px;
+                padding: 15px;
+                background: #7f1d1d;
+                border-radius: 10px;
+            ">
+                ❌ Not quite. Look carefully at the warning signs.
+            </div>
+        `;
+
+    }
+
+
+    document.getElementById("scoreDisplay").innerText =
+        "Score: " + score + " / " + (currentQuestion + 1);
+
+
+    setTimeout(nextQuestion, 1200);
+
+}
+
+
+function nextQuestion() {
+
+    currentQuestion++;
+
+    if (currentQuestion >= questions.length) {
+
+        showFinalScore();
+
+        return;
+
+    }
+
+
+    const question = questions[currentQuestion];
+
+
+    document.getElementById("questionNumber").innerText =
+        "Scenario " + (currentQuestion + 1) + " of 5";
+
+
+    document.querySelector("#quizArea p strong").innerText =
+        "Is this message phishing?";
+
+
+    const paragraphs =
+        document.querySelectorAll("#messageText");
+
+
+    document.querySelector("#messageText").innerText =
+        question.message;
+
+
+    const emailBox =
+        document.querySelector("#messageText").parentElement;
+
+
+    const allParagraphs =
+        emailBox.querySelectorAll("p");
+
+
+    allParagraphs[0].innerHTML =
+        "<strong>From:</strong> " + question.sender;
+
+
+    allParagraphs[1].innerHTML =
+        "<strong>Subject:</strong> " + question.subject;
+
+
+    document.getElementById("quizResult").innerHTML = "";
+
+}
+
+
+function showFinalScore() {
+
+    let percentage =
+        Math.round((score / questions.length) * 100);
+
+
+    let level;
+
+
+    if (percentage === 100) {
+
+        level = "🏆 Cybersecurity Expert";
+
+    } else if (percentage >= 60) {
+
+        level = "🛡️ Cyber Defender";
+
+    } else {
+
+        level = "🔰 Security Trainee";
+
+    }
+
+
+    document.getElementById("quizArea").innerHTML = `
+
+        <h2>🛡️ Security Assessment Complete</h2>
+
+        <h1 style="color: #60a5fa;">
+            ${percentage} / 100
+        </h1>
+
+        <p>
+            You correctly identified
+            <strong>${score}</strong>
+            out of
+            <strong>5</strong>
+            scenarios.
+        </p>
+
+        <h2>
+            ${level}
+        </h2>
+
+        <p>
+            Remember: check the sender, watch for urgency,
+            and avoid unexpected links or requests for sensitive information.
+        </p>
+
+        <button onclick="location.reload()">
+            🔄 Try Again
+        </button>
+
+    `;
+
+}
+
+</script></body>
+
+</html>
